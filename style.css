@@ -16,11 +16,12 @@ body {
 
 .skill-tree {
     position: absolute;
-    width: 1000px; /* Large canvas size */
-    height: 1000px;
-    /* background-color: darkblue; */
-    /* background-color: #00000000; */
-    transform-origin: 0 0;
+    width: 3000px;
+    height: 3000px;
+    transform-origin: center;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .node {

@@ -2,19 +2,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const canvasContainer = document.getElementById("canvas-container");
     const canvas = document.getElementById("canvas");
     const resetButton = document.getElementById("reset-button");
-    const mainNode = document.getElementById("main-skill");
-    const nodes = document.getElementsByClassName("node");
 
     let isDragging = false;
     let startX, startY;
     let offsetX = 0, offsetY = 0;
     let scale = 1;
 
-    // Initial positioning
-    positionNodes();
-
-    // Reposition nodes on window resize
-    window.addEventListener("resize", positionNodes);
+    // Fetch the skill tree data
+    fetch('skill_treee.txt')
+        .then(response => response.text())
+        .then(data => {
+            const skillTree = parseSkillTree(data);
+            createNodes(skillTree);
+            positionNodes(canvas.firstChild);
+        });
 
     canvasContainer.addEventListener("mousedown", (e) => {
         isDragging = true;
@@ -53,64 +54,66 @@ document.addEventListener("DOMContentLoaded", () => {
         canvas.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     }
 
-    function positionNodes() {
-        centerMainNode(mainNode);
-        positionOtherNodes(mainNode, nodes);
+    function parseSkillTree(data) {
+        const lines = data.split('\n');
+        const tree = { name: 'Start', children: [] };
+        const stack = [tree];
+    
+        lines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (trimmedLine) {
+                const level = line.search(/\S|$/) / 2;
+                const node = { name: trimmedLine.split('. ')[1], children: [] };
+    
+                while (stack.length > level + 1) {
+                    stack.pop();
+                }
+    
+                stack[stack.length - 1].children.push(node);
+                stack.push(node);
+            }
+        });
+    
+        return tree;
     }
-
-    function centerMainNode(node) {
-        const canvasRect = canvasContainer.getBoundingClientRect();
-        const nodeRect = node.getBoundingClientRect();
-
-        node.style.left = `${canvasRect.width / 2 - nodeRect.width / 2}px`;
-        node.style.top = `${canvasRect.height / 2 - nodeRect.height / 2}px`;
-    }
-
-    function positionOtherNodes(mainNode, nodes) {
-        const mainRect = mainNode.getBoundingClientRect();
-        const distance = 150; // Adjust distance as needed
-
-        let angleStep = 360 / (nodes.length - 1);
-        let currentAngle = 0;
-
-        // Remove existing lines
-        document.querySelectorAll('.line').forEach(line => line.remove());
-
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i];
-            if (node === mainNode) continue;
-
-            const x = mainRect.left + mainRect.width / 2 + distance * Math.cos(currentAngle * Math.PI / 180);
-            const y = mainRect.top + mainRect.height / 2 + distance * Math.sin(currentAngle * Math.PI / 180);
-
-            node.style.left = `${x - node.offsetWidth / 2}px`;
-            node.style.top = `${y - node.offsetHeight / 2}px`;
-
-            drawLine(mainNode, node);
-
-            currentAngle += angleStep;
+    
+    function createNodes(tree, parent = null) {
+        const node = document.createElement('div');
+        node.className = 'node';
+        node.innerHTML = `
+            <span class="emoji">${getEmoji(tree.name)}</span>
+            <span class="text">${tree.name}</span>
+        `;
+        canvas.appendChild(node);
+    
+        if (parent) {
+            drawLine(parent, node);
         }
+    
+        tree.children.forEach(child => createNodes(child, node));
     }
-
-    function drawLine(parent, child) {
-        const parentRect = parent.getBoundingClientRect();
-        const childRect = child.getBoundingClientRect();
-
-        const x1 = parentRect.left + parentRect.width / 2;
-        const y1 = parentRect.top + parentRect.height / 2;
-        const x2 = childRect.left + childRect.width / 2;
-        const y2 = childRect.top + childRect.height / 2;
-
-        const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
-
-        const line = document.createElement('div');
-        line.className = 'line';
-        line.style.width = `${length}px`;
-        line.style.transform = `rotate(${angle}deg)`;
-        line.style.left = `${x1}px`;
-        line.style.top = `${y1}px`;
-
-        canvas.appendChild(line);
+    
+    function getEmoji(name) {
+        const emojiMatch = name.match(/[\u{1F300}-\u{1F6FF}]/u);
+        return emojiMatch ? emojiMatch[0] : '🔹';
     }
-});
+    
+    function positionNodes(node, level = 0, angle = 0, parentX = 0, parentY = 0) {
+        const distance = 100 + level * 50;
+        const x = parentX + distance * Math.cos(angle);
+        const y = parentY + distance * Math.sin(angle);
+    
+        node.style.left = `${x}px`;
+        node.style.top = `${y}px`;
+    
+        const childNodes = Array.from(node.children).filter(child => child.classList.contains('node'));
+        const childCount = childNodes.length;
+        const angleStep = (Math.PI * 2) / childCount;
+        let currentAngle = angle - Math.PI / 2;
+    
+        childNodes.forEach(child => {
+            positionNodes(child, level + 1, currentAngle, x, y);
+            currentAngle += angleStep;
+        });
+    }
+})

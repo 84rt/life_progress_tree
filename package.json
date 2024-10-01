@@ -1,0 +1,19 @@
+{
+  "name": "tree",
+  "version": "1.0.0",
+  "description": "A website that has most of the code that I want just written in a very \"static\" way: - https://dzone.com/articles/how-to-create-a-network-graph-using-javascript",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/84rt/life_progress_tree.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/84rt/life_progress_tree/issues"
+  },
+  "homepage": "https://github.com/84rt/life_progress_tree#readme"
+}
